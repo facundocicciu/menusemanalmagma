@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLUB MAGMA - Viandas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen pb-12">
+
+    <header class="bg-red-700 text-white p-4 shadow-md flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-xl font-bold tracking-wider">CLUB MAGMA</h1>
+        <button id="btnAdmin" class="text-xl hover:text-gray-300 transition-colors" onclick="abrirLogin()">
+            <i class="fas fa-cog"></i>
+        </button>
+    </header>
+
+    <main class="max-w-2xl mx-auto p-4 mt-4">
+        
+        <div id="vistaCliente">
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-600 mb-6 text-center">
+                <h2 id="clienteSemana" class="text-lg font-bold text-gray-700 uppercase tracking-wide">Cargando menú...</h2>
+                <p class="text-sm text-gray-500">Armá tu pack de viandas congeladas</p>
+            </div>
+
+            <section class="bg-white p-6 rounded-xl shadow-sm mb-6">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4"><span class="bg-red-100 text-red-700 px-2 py-1 rounded-md mr-2 text-sm">1</span> Seleccioná tu Pack:</h3>
+                <div id="contenedorPacks" class="space-y-3">
+                    </div>
+            </section>
+
+            <section id="seccionViandas" class="bg-white p-6 rounded-xl shadow-sm mb-6 hidden">
+                <div class="flex justify-between items-center mb-4 sticky top-[68px] bg-white py-2 border-b z-40">
+                    <h3 class="text-lg font-semibold text-gray-800"><span class="bg-red-100 text-red-700 px-2 py-1 rounded-md mr-2 text-sm">2</span> Elegí tus viandas:</h3>
+                    <span id="contadorViandas" class="bg-gray-800 text-white px-3 py-1 rounded-full text-sm font-bold">0 / 0</span>
+                </div>
+                <div id="listaCategoriasCliente" class="space-y-6 max-h-[500px] overflow-y-auto pr-2">
+                    </div>
+            </section>
+
+            <section id="seccionDatos" class="bg-white p-6 rounded-xl shadow-sm mb-6 hidden">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4"><span class="bg-red-100 text-red-700 px-2 py-1 rounded-md mr-2 text-sm">3</span> Datos de Entrega:</h3>
+                <form id="formPedido" class="space-y-4" onsubmit="enviarWhatsApp(event)">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nombre y Apellido</label>
+                        <input type="text" id="nombre" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Dirección</label>
+                        <input type="text" id="direccion" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Entre calles</label>
+                            <input type="text" id="entrecalles" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Barrio</label>
+                            <input type="text" id="barrio" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Teléfono Celular</label>
+                        <input type="tel" id="telefono" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:ring-red-500">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-colors flex items-center justify-center gap-2 mt-6">
+                        <i class="fab fa-whatsapp text-xl"></i> Enviar Pedido por WhatsApp
+                    </button>
+                </form>
+            </section>
+        </div>
+
+        <div id="modalLogin" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
+            <div class="bg-white p-6 rounded-xl max-w-sm w-full shadow-2xl">
+                <h3 class="text-xl font-bold text-gray-800 mb-4 text-center">Acceso Administrador</h3>
+                <div class="space-y-4">
+                    <input type="text" id="usuarioAdmin" placeholder="Usuario" class="w-full p-2 border rounded-md">
+                    <input type="password" id="passAdmin" placeholder="Contraseña" class="w-full p-2 border rounded-md">
+                    <div class="flex gap-2">
+                        <button onclick="cerrarLogin()" class="w-1/2 bg-gray-300 py-2 rounded-md font-semibold">Cancelar</button>
+                        <button onclick="login()" class="w-1/2 bg-red-600 text-white py-2 rounded-md font-semibold hover:bg-red-700">Ingresar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="vistaAdmin" class="hidden bg-white p-6 rounded-xl shadow-md border-2 border-red-600">
+            <div class="flex justify-between items-center mb-6 border-b pb-4">
+                <h2 class="text-2xl font-bold text-red-700"><i class="fas fa-tools mr-2"></i>Panel Control Magma</h2>
+                <button onclick="cerrarAdmin()" class="bg-gray-600 text-white px-4 py-1 rounded-md text-sm">Salir Panel</button>
+            </div>
+            <div class="mb-6 space-y-4 bg-gray-50 p-4 rounded-lg">
+                <h3 class="font-bold text-gray-700 border-b pb-1">Configuración General</h3>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600">Semana Vigente:</label>
+                    <input type="text" id="adminSemana" class="w-full p-2 border rounded-md mt-1">
+                </div>
+            </div>
+            <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+                <h3 class="font-bold text-gray-700 border-b pb-2 mb-3">Precios de Packs</h3>
+                <div id="adminPacksContainer" class="space-y-3"></div>
+            </div>
+            <div class="mb-6 bg-gray-50 p-4 rounded-lg">
+                <div class="flex justify-between items-center border-b pb-2 mb-3">
+                    <h3 class="font-bold text-gray-700">Menú de Platos (Máx 45)</h3>
+                    <button onclick="agregarInputPlato('', 'viandas con carne')" class="bg-red-600 text-white text-xs px-2 py-1 rounded+">+ Añadir Plato</button>
+                </div>
+                <div id="adminPlatosContainer" class="space-y-2 max-h-80 overflow-y-auto pr-2"></div>
+            </div>
+            <button id="btnGuardarAdmin" onclick="guardarCambiosAdmin()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-all flex justify-center items-center">
+                <i class="fas fa-save mr-2"></i> ACTUALIZAR SITIO WEB
+            </button>
+        </div>
+    </main>
+
+    <script>
+        // Inicialización de conexiones con tus credenciales de Supabase
+        const SUPABASE_URL = "https://pmiritzrmlcgdvhmptxh.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBtaXJpdHpybWxjZ2R2aG1wdHhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxMjE0NjEsImV4cCI6MjA5NTY5NzQ2MX0.pQO6s8l8iweJA5hGL4UAuJNGego_6eVvFVj4OT2LIkU";
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const areasDisponibles = [
+            "viandas con carne", "viandas con pollo", "pastas", "tartas", 
+            "tortillas", "pizzas", "viandas vegetarianas", "viandas con pescado"
+        ];
+
+        // Estado local de la aplicación
+        let appData = { semana: "", packs: [], platos: [] };
+        let packSeleccionado = null;
+        let viandasSeleccionadas = {}; 
+
+        window.onload = async function() {
+            await cargarDatosDesdeSupabase();
+        };
+
+        // --- TRAER DATOS EN TIEMPO REAL ---
+        async function cargarDatosDesdeSupabase() {
+            try {
+                // 1. Obtener la configuración general (Fila ID 1)
+                const { data: general, error: errGen } = await _supabase.from('config_general').select('*').eq('id', 1).single();
+                if (errGen) throw errGen;
+                
+                appData.semana = general.semana;
+                appData.packs = general.packs;
+
+                // 2. Obtener los platos del menú
+                const { data: platos, error: errPlat } = await _supabase.from('menu_platos').select('*').order('id', { ascending: true });
+                if (errPlat) throw errPlat;
+                
+                appData.platos = platos;
+
+                renderCliente();
+            } catch (error) {
+                console.error("Error cargando base de datos:", error);
+                alert("Hubo un problema al conectar con Supabase. Verificá las tablas creadas.");
+            }
+        }
+
+        // --- RENDERIZAR VISTA DEL CLIENTE ---
+        function renderCliente() {
+            document.getElementById('clienteSemana').innerText = "MENU " + appData.semana;
+
+            const contPacks = document.getElementById('contenedorPacks');
+            contPacks.innerHTML = '';
+            appData.packs.forEach(pack => {
+                contPacks.innerHTML += `
+                    <label class="flex items-center justify-between p-4 border rounded-xl cursor-pointer hover:bg-red-50 transition-all border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="packRadio" value="${pack.id}" onchange="seleccionarPack(${pack.id})" class="text-red-600 h-5 w-5">
+                            <div>
+                                <span class="font-bold text-gray-800 text-lg">Pack x${pack.cantidad}</span>
+                                <span class="text-xs text-gray-500 block">(${pack.envio})</span>
+                            </div>
+                        </div>
+                        <span class="font-extrabold text-red-700 text-lg">$${pack.precio.toLocaleString('es-AR')}</span>
+                    </label>
+                `;
+            });
+
+            const listaCategoriasCliente = document.getElementById('listaCategoriasCliente');
+            listaCategoriasCliente.innerHTML = '';
+
+            areasDisponibles.forEach(area => {
+                const platosFiltrados = appData.platos.map((p, idx) => ({...p, originalIndex: idx}))
+                                                      .filter(p => p.nombre.trim() !== "" && p.area === area);
+
+                if (platosFiltrados.length > 0) {
+                    let htmlCategoria = `
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-xs">
+                            <h4 class="text-md font-bold text-red-700 uppercase tracking-wide mb-3 border-b pb-1 border-red-200 flex items-center justify-between">
+                                <span>${area}</span>
+                            </h4>
+                            <div class="space-y-2">
+                    `;
+                    platosFiltrados.forEach(plato => {
+                        htmlCategoria += `
+                            <div class="flex items-center justify-between p-2.5 bg-white rounded-lg border border-gray-100">
+                                <span class="text-sm font-medium text-gray-700 max-w-[65%]">${plato.nombre}</span>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" onclick="modificarVianda(${plato.originalIndex}, -1)" class="bg-gray-200 font-bold px-2.5 py-0.5 rounded">-</button>
+                                    <span id="cant-plato-${plato.originalIndex}" class="font-bold text-gray-800 w-5 text-center">0</span>
+                                    <button type="button" onclick="modificarVianda(${plato.originalIndex}, 1)" class="bg-red-600 text-white font-bold px-2.5 py-0.5 rounded">+</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    htmlCategoria += `</div></div>`;
+                    listaCategoriasCliente.innerHTML += htmlCategoria;
+                }
+            });
+        }
+
+        function seleccionarPack(id) {
+            packSeleccionado = appData.packs.find(p => p.id === id);
+            viandasSeleccionadas = {}; 
+            appData.platos.forEach((_, index) => {
+                const el = document.getElementById(`cant-plato-${index}`);
+                if(el) el.innerText = "0";
+            });
+            document.getElementById('seccionViandas').classList.remove('hidden');
+            actualizarContadorViandas();
+            verificarTopeViandas();
+        }
+
+        function totalViandasElegidas() {
+            return Object.values(viandasSeleccionadas).reduce((a, b) => a + b, 0);
+        }
+
+        function modificarVianda(index, cambio) {
+            if (!packSeleccionado) return alert("Por favor, primero seleccioná un pack.");
+            let actual = viandasSeleccionadas[index] || 0;
+            let totalActual = totalViandasElegidas();
+
+            if (cambio > 0 && totalActual >= packSeleccionado.cantidad) {
+                alert(`¡Ya seleccionó todas las viandas disponibles en ese pack (Pack x${packSeleccionado.cantidad})!`);
+                return;
+            }
+
+            actual += cambio;
+            if (actual < 0) actual = 0;
+            if (actual === 0) delete viandasSeleccionadas[index];
+            else viandasSeleccionadas[index] = actual;
+
+            const el = document.getElementById(`cant-plato-${index}`);
+            if (el) el.innerText = actual;
+            actualizarContadorViandas();
+            verificarTopeViandas();
+        }
+
+        function actualizarContadorViandas() {
+            document.getElementById('contadorViandas').innerText = `${totalViandasElegidas()} / ${packSeleccionado.cantidad}`;
+        }
+
+        function verificarTopeViandas() {
+            const seccionDatos = document.getElementById('seccionDatos');
+            if (totalViandasElegidas() === packSeleccionado.cantidad) {
+                seccionDatos.classList.remove('hidden');
+            } else {
+                seccionDatos.classList.add('hidden');
+            }
+        }
+
+        function enviarWhatsApp(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('nombre').value;
+            const direccion = document.getElementById('direccion').value;
+            const entrecalles = document.getElementById('entrecalles').value;
+            const barrio = document.getElementById('barrio').value;
+            const telefono = document.getElementById('telefono').value;
+
+            let detalleViandas = "";
+            areasDisponibles.forEach(area => {
+                let itemsDeEstaArea = "";
+                for (const [index, cant] of Object.entries(viandasSeleccionadas)) {
+                    const plato = appData.platos[index];
+                    if (plato && plato.area === area) {
+                        itemsDeEstaArea += `  • ${cant}x ${plato.nombre}\n`;
+                    }
+                }
+                if (itemsDeEstaArea !== "") {
+                    detalleViandas += `*_${area.toUpperCase()}_*\n${itemsDeEstaArea}`;
+                }
+            });
+
+            const mensaje = `*NUEVO PEDIDO - CLUB MAGMA*\n\n` +
+                            `*Pack:* Pack x${packSeleccionado.cantidad} (${packSeleccionado.envio}) - Total: $${packSeleccionado.precio}\n\n` +
+                            `*Detalle del pedido:*\n${detalleViandas}\n` +
+                            `*Datos de Entrega:*\n` +
+                            `- *Nombre:* ${nombre}\n` +
+                            `- *Dirección:* ${direccion}\n` +
+                            `- *Entre calles:* ${entrecalles}\n` +
+                            `- *Barrio:* ${barrio}\n` +
+                            `- *Celular:* ${telefono}\n\n` +
+                            `aguardo confirmacion de que recibieron mi pedido`;
+
+            window.open(`https://api.whatsapp.com/send?phone=1141819796&text=${encodeURIComponent(mensaje)}`, '_blank');
+        }
+
+        // --- LOGIN Y PANEL ADMIN (VINCULADO A SUPABASE) ---
+        function abrirLogin() { document.getElementById('modalLogin').classList.remove('hidden'); }
+        function cerrarLogin() { 
+            document.getElementById('modalLogin').classList.add('hidden');
+            document.getElementById('usuarioAdmin').value = "";
+            document.getElementById('passAdmin').value = "";
+        }
+
+        function login() {
+            const user = document.getElementById('usuarioAdmin').value;
+            const pass = document.getElementById('passAdmin').value;
+            if (user === "viandas magma" && pass === "Rebizzo4810") {
+                cerrarLogin();
+                document.getElementById('vistaCliente').classList.add('hidden');
+                document.getElementById('btnAdmin').classList.add('hidden');
+                document.getElementById('vistaAdmin').classList.remove('hidden');
+                renderAdmin();
+            } else {
+                alert("Usuario o contraseña incorrectos.");
+            }
+        }
+
+        function cerrarAdmin() {
+            document.getElementById('vistaAdmin').classList.add('hidden');
+            document.getElementById('vistaCliente').classList.remove('hidden');
+            document.getElementById('btnAdmin').classList.remove('hidden');
+        }
+
+        function renderAdmin() {
+            document.getElementById('adminSemana').value = appData.semana;
+            const containerPacks = document.getElementById('adminPacksContainer');
+            containerPacks.innerHTML = '';
+            appData.packs.forEach((pack, index) => {
+                containerPacks.innerHTML += `
+                    <div class="grid grid-cols-3 gap-2 items-center border-b pb-2">
+                        <span class="font-bold text-gray-700 text-xs">Pack x${pack.cantidad}:</span>
+                        <input type="number" id="precio-pack-${index}" value="${pack.precio}" class="p-1 border rounded text-xs">
+                        <select id="envio-pack-${index}" class="p-1 border rounded text-xs">
+                            <option value="ENVIO SIN CARGO" ${pack.envio === 'ENVIO SIN CARGO' ? 'selected' : ''}>ENVIO SIN CARGO</option>
+                            <option value="Envio a cargo del cliente" ${pack.envio === 'Envio a cargo del cliente' ? 'selected' : ''}>Envio a cargo del cliente</option>
+                        </select>
+                    </div>
+                `;
+            });
+
+            const containerPlatos = document.getElementById('adminPlatosContainer');
+            containerPlatos.innerHTML = '';
+            appData.platos.forEach(plato => {
+                agregarInputPlato(plato.nombre, plato.area);
+            });
+            if(appData.platos.length === 0) agregarInputPlato('', 'viandas con carne');
+        }
+
+        function agregarInputPlato(nombreValor, areaValor) {
+            const container = document.getElementById('adminPlatosContainer');
+            const totalInputs = container.getElementsByClassName('item-plato-row').length;
+            if (totalInputs >= 45) return alert("Alcanzaste el límite de 45 platos.");
+
+            let optionsHtml = "";
+            areasDisponibles.forEach(area => {
+                optionsHtml += `<option value="${area}" ${area === areaValor ? 'selected' : ''}>${area}</option>`;
+            });
+
+            const div = document.createElement('div');
+            div.className = "item-plato-row flex gap-2 items-center bg-white p-1 border rounded shadow-2xs";
+            div.innerHTML = `
+                <span class="text-xs text-gray-400 font-bold px-1">${totalInputs + 1}</span>
+                <input type="text" class="input-nombre-admin w-1/2 p-1 border rounded text-xs" value="${nombreValor}" placeholder="Nombre del plato">
+                <select class="select-area-admin w-1/2 p-1 border rounded text-xs bg-gray-50">
+                    ${optionsHtml}
+                </select>
+                <button onclick="this.parentElement.remove()" class="text-red-500 text-xs px-1"><i class="fas fa-trash"></i></button>
+            `;
+            container.appendChild(div);
+        }
+
+        // --- SUBIR LOS CAMBIOS DIRECTO A TU SUPABASE ---
+        async function guardarCambiosAdmin() {
+            const btn = document.getElementById('btnGuardarAdmin');
+            btn.disabled = true;
+            btn.innerText = "Guardando en Supabase...";
+
+            try {
+                const nuevaSemana = document.getElementById('adminSemana').value;
+                
+                // Formar el nuevo array de JSON para los packs
+                const nuevosPacks = appData.packs.map((pack, index) => {
+                    return {
+                        id: pack.id,
+                        cantidad: pack.cantidad,
+                        precio: Number(document.getElementById(`precio-pack-${index}`).value),
+                        envio: document.getElementById(`envio-pack-${index}`).value
+                    }
+                });
+
+                // 1. Guardar Semana y Packs en `config_general` (Fila ID 1)
+                const { error: errGen } = await _supabase.from('config_general').update({
+                    semana: nuevaSemana,
+                    packs: nuevosPacks
+                }).eq('id', 1);
+                
+                if (errGen) throw errGen;
+
+                // 2. Procesar platos
+                const rows = document.querySelectorAll('.item-plato-row');
+                const nuevosPlatos = [];
+                rows.forEach(row => {
+                    const nombre = row.querySelector('.input-nombre-admin').value.trim();
+                    const area = row.querySelector('.select-area-admin').value;
+                    if (nombre !== "") {
+                        nuevosPlatos.push({ nombre: nombre, area: area });
+                    }
+                });
+
+                // Para evitar conflictos, borramos el menú viejo e insertamos el nuevo mapeo
+                const { error: errDel } = await _supabase.from('menu_platos').delete().neq('id', 0);
+                if (errDel) throw errDel;
+
+                if (nuevosPlatos.length > 0) {
+                    const { error: errIns } = await _supabase.from('menu_platos').insert(nuevosPlatos);
+                    if (errIns) throw errIns;
+                }
+
+                alert("¡Base de datos de Supabase actualizada con éxito!");
+                
+                // Recargar el estado local refrescando desde el servidor
+                await cargarDatosDesdeSupabase();
+                
+                // Resetear selecciones del cliente
+                packSeleccionado = null;
+                viandasSeleccionadas = {};
+                document.getElementById('seccionViandas').classList.add('hidden');
+                document.getElementById('seccionDatos').classList.add('hidden');
+                
+                cerrarAdmin();
+            } catch (error) {
+                console.error("Error al guardar:", error);
+                alert("Ocurrió un error guardando los datos.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fas fa-save mr-2"></i> ACTUALIZAR SITIO WEB`;
+            }
+        }
+    </script>
+</body>
+</html>
