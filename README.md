@@ -1,0 +1,2 @@
+# menusemanalmagma
+MENU SEMANAL MAGMA
